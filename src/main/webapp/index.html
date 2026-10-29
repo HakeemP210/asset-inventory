@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>IT Asset Inventory</title>
+    <style>
+        body { font-family: Segoe UI, Arial, sans-serif; margin: 40px; }
+        form input { margin: 4px; padding: 6px; }
+        table { border-collapse: collapse; width: 100%; margin-top: 20px; }
+        th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+        th { background-color: #128336; color: white; }
+        .overdue { color: #c62828; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <h1>IT Asset Inventory</h1>
+
+    <form id="assetForm">
+        <input id="assetTag" placeholder="Asset tag" required>
+        <input id="deviceType" placeholder="Device Type">
+        <input id="model" placeholder="Model">
+        <input id="serialNumber" placeholder="Serial Number">
+        <label>Warranty end <input id="warrantyEnd" type="date"></label>
+        <label>Last patched <input id="lastPatched" type="date"></label>
+        <button type="submit">Add Device</button>
+    </form>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Tag</th><th>Type</th><th>Model</th><th>Serial Number</th>
+                <th>Warranty End</th><th>Last Patched</th><th></th>
+            </tr>
+        </thead>
+        <tbody id="assetRows"></tbody>
+    </table>
+
+    <script>
+        const API = "api/assets";
+
+        function field(id) {
+            return document.getElementById(id).value || null;
+        }
+
+        function isPatchOverdue(date) {
+            if (!date) return true;
+            const days = (Date.now() - new Date(date)) / (1000 * 60 * 60 * 24);
+            return days > 30;
+        }
+
+        async function loadAssets() {
+            const response = await fetch(API);
+            const assets = await response.json();
+            const rows = document.getElementById("assetRows");
+            rows.innerHTML = "";
+
+            for (const a of assets) {
+                const tr = document.createElement("tr");
+                for (const value of [a.assetTag, a.deviceType, a.model, a.serialNumber, a.warrantyEnd, a.lastPatched]) {
+                    const td = document.createElement("td");
+                    td.textContent = value ?? "";
+                    tr.appendChild(td);
+                }
+
+                if (isPatchOverdue(a.lastPatched)) {
+                    tr.children[5].classList.add("overdue");
+                    tr.children[5].textContent += " (overdue)";
+                }
+
+                const deleteButton = document.createElement("button");
+                deleteButton.textContent = "Delete";
+                deleteButton.onclick = () => deleteAsset(a.id);
+                const td = document.createElement("td");
+                td.appendChild(deleteButton);
+                tr.appendChild(td);
+
+                rows.appendChild(tr);
+            }
+        }
+
+        async function deleteAsset(id) {
+            await fetch(API + "/" + id, { method: "DELETE" });
+            loadAssets();
+        }
+
+        document.getElementById("assetForm").addEventListener("submit", async (event) => {
+            event.preventDefault();
+            const asset = {
+                assetTag: field("assetTag"),
+                deviceType: field("deviceType"),
+                model: field("model"),
+                serialNumber: field("serialNumber"),
+                warrantyEnd: field("warrantyEnd"),
+                lastPatched: field("lastPatched")
+            };
+            const response = await fetch(API, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(asset)
+            });
+            if (!response.ok) {
+                alert("Could not save. Is that asset tag already in use?");
+                return;
+            }
+            event.target.reset();
+            loadAssets();
+        });
+
+        loadAssets();
+    </script>
+</body>
+</html>
