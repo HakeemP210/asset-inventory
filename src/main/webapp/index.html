@@ -14,6 +14,7 @@
 </head>
 <body>
     <h1>IT Asset Inventory</h1>
+    <p>Enter the details of your IT assets below. The system will highlight any devices that have not been patched in the last 30 days.</p>
 
     <form id="assetForm">
         <input id="assetTag" placeholder="Asset tag" required>
@@ -34,7 +35,8 @@
         </thead>
         <tbody id="assetRows"></tbody>
     </table>
-
+    <p>Deployed automatically by GitHub Actions</p>
+    
     <script>
         const API = "api/assets";
 
