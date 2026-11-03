@@ -1,0 +1,8 @@
+[Unit]
+Description=Deploy new asset-inventory releases from GitHub
+After=wildfly.service network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/opt/deploy/deploy.sh
