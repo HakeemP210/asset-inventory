@@ -1,0 +1,9 @@
+embed-server --std-out=echo --server-config=standalone.xml
+
+module add --name=org.postgresql --resources=/tmp/postgresql.jar --dependencies=jakarta.transaction.api
+
+/subsystem=datasources/jdbc-driver=postgresql:add(driver-module-name=org.postgresql,driver-class-name=org.postgresql.Driver)
+
+data-source add --name=InventoryDS --jndi-name=java:jboss/datasources/InventoryDS --driver-name=postgresql --connection-url=jdbc:postgresql://${env.DB_HOST:db}:5432/${env.DB_NAME:asset_inventory} --user-name=${env.DB_USER} --password=${env.DB_PASSWORD}
+
+stop-embedded-server
